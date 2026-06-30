@@ -64,7 +64,7 @@ function inject_file() {
 
 
 function extract_file() {
-	sshpass -f $PASS_PATH scp -P 4242 $VM_USER@$HOSTNAME:/home/user/$VM_USER/$VM_USER ./binaries/. 2> /dev/null
+	sshpass -f $PASS_PATH scp -P 4242 $VM_USER@$HOSTNAME:/home/users/$VM_USER/$VM_USER ./binaries/. 2> /dev/null
 
 	if [ $? -ne 0 ]; then
 		echo -e "Failed to extract $vm_user_bold to ./binaries/$vm_user_bold"
