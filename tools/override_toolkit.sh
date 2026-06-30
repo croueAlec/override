@@ -27,7 +27,6 @@ find_latest_level() {
 	for user in level00 level01 level02 level03 level04 level05 \
 				level06 level07 level08 level09
 	do
-		echo $user
 		if [ ! -s "./$user/flag" ]; then
 			VM_USER="$user"
 			vm_user_bold="\033[1m$VM_USER\033[0m"
@@ -101,7 +100,7 @@ else
 
 	if [[ "$VM_USER" =~ ^(level0[0-9]|end)$ ]]; then
 
-		num=${VM_USER##*[!00-09]}
+		num=${VM_USER##*[!0-9]}
 		prefix=${VM_USER%"$num"}
 
 		previous_user="${prefix}0$((num - 1))"
