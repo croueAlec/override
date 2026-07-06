@@ -1,4 +1,5 @@
 binaries/
-test.c
 a.out
 *.log
+*.c
+!*/*.c
