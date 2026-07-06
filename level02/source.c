@@ -13,20 +13,20 @@ uint64_t main(void)
 	char	read_buffer [48];
 	char	username [100];
 	int		length_read;
-	FILE	*fd;
+	FILE	*password_fd;
 	
 	bzero(username, 100);
 	bzero(read_buffer, 41);
 	bzero(password, 100);
-	fd = (FILE *)0x0;
+	password_fd = (FILE *)0x0;
 	length_read = 0;
-	fd = fopen("/home/users/level03/.pass", "r");
-	if (fd == (FILE *)0x0) {
+	password_fd = fopen("/home/users/level03/.pass", "r");
+	if (password_fd == (FILE *)0x0) {
 		fwrite("ERROR: failed to open password file\n", 1, 36, stderr);
 										/* WARNING: Subroutine does not return */
 		exit(1);
 	}
-	length_read = fread(read_buffer, 1, 41, fd);
+	length_read = fread(read_buffer, 1, 41, password_fd);
 	newline_index = strcspn(read_buffer,"\n");
 	read_buffer[newline_index] = '\0';
 	if (length_read != 41) {
@@ -35,7 +35,7 @@ uint64_t main(void)
 										/* WARNING: Subroutine does not return */
 		exit(1);
 	}
-	fclose(fd);
+	fclose(password_fd);
 
 	puts("===== [ Secure Access System v1.0 ] =====");
 	puts("/***************************************\\");
