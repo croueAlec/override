@@ -17,7 +17,6 @@ vboxmanage unregistervm $VM_NAME --delete;
 fi;
 
 separator "Creating VM $VM_NAME"
-vboxmanage createvm --name
 vboxmanage createvm --name "$VM_NAME" --register
 vboxmanage modifyvm "$VM_NAME" --ostype "Ubuntu_64"
 
