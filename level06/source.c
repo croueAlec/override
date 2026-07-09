@@ -33,7 +33,6 @@ int main(void)
 }
 
 int auth(char *login, size_t serial)
-
 {
 	int	length;
 	size_t	code;
