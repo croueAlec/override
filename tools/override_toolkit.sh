@@ -100,8 +100,8 @@ else
 
 	if [[ "$VM_USER" =~ ^(level0[0-9]|end)$ ]]; then
 
-		num=${VM_USER##*[!0-9]}
-		prefix=${VM_USER%"$num"}
+		num=$((10#${VM_USER##*[!0-9]}))
+		prefix=${VM_USER%"0$num"}
 
 		previous_user="${prefix}0$((num - 1))"
 
