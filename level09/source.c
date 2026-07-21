@@ -9,7 +9,7 @@
 typedef struct msg {
 	char message[140];
 	char username[40];
-	int len;
+	int length;
 } msg_t;
 
 
@@ -24,28 +24,28 @@ void secret_backdoor(void)
 
 void set_msg(msg_t *message)
 {
-	char	message_buffer[1024];
+	char	buffer[1024];
 
-	bzero(message_buffer, 1024);
+	bzero(buffer, 1024);
 	puts(">: Msg @Unix-Dude");
 	printf(">>: ");
-	fgets(message_buffer, 1024, stdin);
-	strncpy(message->message, message_buffer, message->len);
+	fgets(buffer, 1024, stdin);
+	strncpy(message->message, buffer, message->length);
 	return;
 }
 
-void set_username(char *buffer)
+void set_username(char *username)
 {
-	char username[128];
+	char buffer[128];
 
-	bzero(username, 128);
+	bzero(buffer, 128);
 	puts(">: Enter your username");
 	printf(">>: ");
-	fgets(username, 128, stdin);
-	for (int i = 0; (i < 41 && (username[i] != '\0')); i++) {
-		buffer[i] = username[i];
+	fgets(buffer, 128, stdin);
+	for (int i = 0; (i < 41 && (buffer[i] != '\0')); i++) {
+		username[i] = buffer[i];
 	}
-	printf(">: Welcome, %s", buffer);
+	printf(">: Welcome, %s", username);
 	return;
 }
 
@@ -54,7 +54,7 @@ void handle_msg(void)
 	msg_t	message;
 
 	bzero(message.username, 40);
-	message.len = 140;
+	message.length = 140;
 
 	set_username(message.username);
 	set_msg(message.message);
