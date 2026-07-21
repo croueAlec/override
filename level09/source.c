@@ -7,9 +7,9 @@
 /* Decomipled using Ghidra */
 
 typedef struct msg {
-	char message[140];
-	char username[40];
 	int length;
+	char username[40];
+	char message[140];
 } msg_t;
 
 
